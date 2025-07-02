@@ -5,16 +5,33 @@
 import type { ErrorCategory, ErrorSeverity } from './errors.js';
 import type { SupportedLanguage } from './languages.js';
 
+export type TransportType = 'stdio' | 'http' | 'sse';
+
+export interface TransportConfig {
+  type: TransportType;
+  // HTTP/SSE transport options (only used when type is 'http' or 'sse')
+  port?: number;
+  host?: string;
+  // Stdio transport options (only used when type is 'stdio')
+  stdio?: {
+    // No additional options needed for stdio transport
+  };
+}
+
 export interface ServerConfig {
   server: {
     name: string;
     version: string;
-    port?: number;
-    host?: string;
     logLevel: 'debug' | 'info' | 'warn' | 'error';
     maxConnections?: number;
     timeout?: number;
+    // Legacy port/host fields (deprecated - use transport.port/host instead)
+    /** @deprecated Use transport.port instead */
+    port?: number;
+    /** @deprecated Use transport.host instead */
+    host?: string;
   };
+  transport: TransportConfig;
   detection: ErrorDetectionConfig;
   analysis: ErrorAnalysisConfig;
   debugging: DebuggingConfig;

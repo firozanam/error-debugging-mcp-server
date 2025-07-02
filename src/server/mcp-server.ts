@@ -186,10 +186,31 @@ export class ErrorDebuggingMCPServer extends EventEmitter {
       await this.registerCoreComponents();
       this.logger.logPerformance('core-components-registration', Date.now() - coreComponentsStartTime);
 
-      // Start the server
-      this.logger.debug('Starting MCP server transport...');
+      // Start the server with configured transport
+      const transportType = this.config.transport?.type || 'stdio';
+      this.logger.debug(`Starting MCP server with ${transportType} transport...`);
       const transportStartTime = Date.now();
-      const transport = new StdioServerTransport();
+
+      let transport: any;
+      let transportInfo: any;
+
+      switch (transportType) {
+        case 'stdio':
+          transport = new StdioServerTransport();
+          transportInfo = {
+            transport: 'stdio',
+            transportType: 'stdin/stdout',
+            description: 'Standard input/output communication'
+          };
+          break;
+        case 'http':
+        case 'sse':
+          // For future implementation - currently only stdio is supported
+          throw new Error(`Transport type '${transportType}' is not yet implemented. Only 'stdio' transport is currently supported.`);
+        default:
+          throw new Error(`Unknown transport type: ${transportType}`);
+      }
+
       await this.server.connect(transport);
       this.logger.logPerformance('transport-connection', Date.now() - transportStartTime);
 
@@ -198,16 +219,12 @@ export class ErrorDebuggingMCPServer extends EventEmitter {
 
       this.logger.info('Server started successfully', {
         totalStartupTime,
-        port: this.config.server.port ?? 0,
-        host: this.config.server.host ?? 'localhost',
+        ...transportInfo,
         components: ['plugin-manager', 'error-detector-manager', 'tool-registry', 'core-components', 'transport'],
         memoryUsage: process.memoryUsage()
       });
 
-      this.emit('server:started', {
-        port: this.config.server.port ?? 0,
-        host: this.config.server.host ?? 'localhost'
-      });
+      this.emit('server:started', transportInfo);
 
     } catch (error) {
       this.logger.error('Failed to start server', {

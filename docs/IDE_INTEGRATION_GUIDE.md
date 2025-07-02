@@ -5,15 +5,31 @@ This guide provides step-by-step instructions for integrating the Error Debuggin
 ## 🚀 Server Status
 
 ✅ **Server is running successfully!**
-- Port: localhost (stdio transport)
-- Components: plugin-manager, error-detector-manager, tool-registry, core-components, transport
-- Tools available: `detect-errors`, `analyze-error`
+- **Transport**: stdio (stdin/stdout communication)
+- **Protocol**: Model Context Protocol (MCP)
+- **Components**: plugin-manager, error-detector-manager, tool-registry, core-components, transport
+- **Tools available**: `detect-errors`, `analyze-error`
+
+## 📖 Understanding MCP Transport
+
+The Error Debugging MCP Server uses **stdio transport**, which means:
+- ✅ Communication happens through stdin/stdout (not network ports)
+- ✅ The IDE launches the server as a child process
+- ✅ No network configuration or firewall setup required
+- ✅ Secure local communication only
 
 ## 📋 Prerequisites
 
 1. **Server built and running**: ✅ Confirmed
-2. **Node.js**: v22.14.0+ ✅ 
+2. **Node.js**: v22.14.0+ ✅
 3. **MCP-compatible IDE**: Choose from options below
+4. **Server executable**: `/path/to/error-debugging-mcp-server/dist/index.js`
+
+## ⚠️ Important Notes
+
+- **No port configuration needed**: MCP servers using stdio transport don't require port/host settings
+- **IDE must support MCP**: Ensure your IDE has MCP client capabilities
+- **Process-based communication**: The IDE will launch the server as a subprocess
 
 ## 🎯 IDE Integration Options
 
@@ -33,7 +49,7 @@ Add to your VS Code `settings.json`:
   "mcp.servers": {
     "error-debugging": {
       "command": "node",
-      "args": ["/Volumes/Storage/Tool_Projects/error-debugging-mcp-server/dist/index.js"],
+      "args": ["/path/to/error-debugging-mcp-server/dist/index.js"],
       "env": {
         "NODE_ENV": "development"
       }
@@ -61,7 +77,7 @@ Create or edit `~/.cursor/mcp-settings.json`:
   "servers": {
     "error-debugging": {
       "command": "node",
-      "args": ["/Volumes/Storage/Tool_Projects/error-debugging-mcp-server/dist/index.js"],
+      "args": ["/path/to/error-debugging-mcp-server/dist/index.js"],
       "description": "Error debugging and analysis server",
       "capabilities": ["tools", "resources", "prompts"]
     }
@@ -87,7 +103,7 @@ Add to Windsurf's MCP configuration file:
   "mcpServers": {
     "error-debugging": {
       "command": "node",
-      "args": ["/Volumes/Storage/Tool_Projects/error-debugging-mcp-server/dist/index.js"],
+      "args": ["/path/to/error-debugging-mcp-server/dist/index.js"],
       "env": {
         "DEBUG": "mcp:*"
       }
@@ -98,9 +114,12 @@ Add to Windsurf's MCP configuration file:
 
 ### 4. 🔴 Augment Code Integration
 
-Since you're using Augment Code, here's the integration:
+Since you're using Augment Code, here's the specific integration:
 
-#### Step 1: Configure Augment
+#### Step 1: Configure Augment MCP Server
+The error you're seeing ("Tool execution failed: Not connected") suggests the MCP server isn't properly connected. Here's the correct configuration:
+
+**Option A: Direct MCP Configuration**
 Add to your Augment workspace configuration:
 
 ```json
@@ -109,14 +128,42 @@ Add to your Augment workspace configuration:
     "servers": {
       "error-debugging": {
         "command": "node",
-        "args": ["/Volumes/Storage/Tool_Projects/error-debugging-mcp-server/dist/index.js"],
+        "args": ["/path/to/error-debugging-mcp-server/dist/index.js"],
         "description": "Advanced error detection and debugging",
-        "features": ["error-detection", "performance-monitoring", "debug-sessions"]
+        "transport": "stdio",
+        "capabilities": ["tools", "resources", "prompts"],
+        "env": {
+          "NODE_ENV": "development",
+          "MCP_SERVER_CONFIG": "/path/to/error-debugging-mcp-server/error-debugging-config.json"
+        }
       }
     }
   }
 }
 ```
+
+**Option B: Using the Startup Script**
+```json
+{
+  "mcp": {
+    "servers": {
+      "error-debugging": {
+        "command": "/path/to/error-debugging-mcp-server/start-mcp-server.sh",
+        "description": "Advanced error detection and debugging",
+        "transport": "stdio"
+      }
+    }
+  }
+}
+```
+
+#### Step 2: Verify Connection
+1. Restart Augment Code
+2. Check if the MCP server appears in the available tools
+3. Try using the `detect-errors` tool with parameters:
+   - source: "all"
+   - includeWarnings: true
+   - realTime: true
 
 ## 🧪 Testing Scenarios
 
@@ -190,19 +237,28 @@ When properly integrated, you should see:
 
 ### Common Issues:
 
-1. **Server not connecting**:
+1. **"Tool execution failed: Not connected" Error**:
+   - ✅ **Most Common Issue**: IDE MCP client not properly configured
+   - ✅ **Solution**: Ensure your IDE supports MCP and is configured correctly
+   - ✅ **Check**: Server path is correct: `/path/to/error-debugging-mcp-server/dist/index.js`
+   - ✅ **Verify**: Server starts manually: `node /path/to/error-debugging-mcp-server/dist/index.js`
+
+2. **Server not connecting**:
    - Check if server is running: `ps aux | grep node`
    - Verify path in configuration
    - Check IDE logs for MCP errors
+   - Ensure stdio transport is specified in IDE config
 
-2. **Tools not available**:
+3. **Tools not available**:
    - Restart IDE after configuration
    - Check MCP server logs
    - Verify JSON syntax in config files
+   - Confirm IDE has MCP client support
 
-3. **Permission errors**:
+4. **Permission errors**:
    - Ensure Node.js has proper permissions
    - Check file paths are accessible
+   - Verify executable permissions on startup script
 
 ### Debug Commands:
 ```bash

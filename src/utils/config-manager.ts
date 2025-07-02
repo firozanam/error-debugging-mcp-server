@@ -188,6 +188,9 @@ export class ConfigManager {
         maxConnections: 10,
         timeout: 30000,
       },
+      transport: {
+        type: 'stdio' as const,
+      },
       detection: {
         enabled: true,
         realTime: true,
