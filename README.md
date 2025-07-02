@@ -56,6 +56,8 @@ A **production-ready Model Context Protocol (MCP) server** that transforms AI-po
 ```bash
 # Clone the repository
 git clone https://github.com/your-org/error-debugging-mcp-server.git
+
+# Change directory to the project directory
 cd error-debugging-mcp-server
 
 # Install dependencies
