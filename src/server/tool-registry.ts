@@ -4,6 +4,8 @@
 
 import type { MCPTool, MCPToolResult } from '@/types/index.js';
 import type { ErrorDetectorManager } from '@/detectors/error-detector-manager.js';
+import type { LanguageHandlerManager } from '@/languages/language-handler-manager.js';
+import { SupportedLanguage } from '@/types/languages.js';
 import { Logger } from '@/utils/logger.js';
 
 export type ToolHandler = (args: Record<string, unknown>) => Promise<MCPToolResult>;
@@ -12,6 +14,7 @@ export class ToolRegistry {
   private tools: Map<string, MCPTool> = new Map();
   private handlers: Map<string, ToolHandler> = new Map();
   private errorDetectorManager: ErrorDetectorManager | null = null;
+  private languageHandlerManager: LanguageHandlerManager | null = null;
   private logger = new Logger('info', { logFile: undefined });
 
   async registerTool(tool: MCPTool, handler?: ToolHandler): Promise<void> {
@@ -156,11 +159,16 @@ export class ToolRegistry {
     const realTime = args['realTime'] as boolean || false;
 
     try {
+      // If a specific language is requested and we have files, use language handler manager
+      if (language && files.length > 0 && this.languageHandlerManager) {
+        return await this.handleLanguageSpecificDetection(language, files, includeWarnings, source);
+      }
+
+      // Otherwise, use the error detector manager for general detection
       if (!this.errorDetectorManager) {
         throw new Error('Error detector manager not initialized');
       }
 
-      // Detect errors using the error detector manager
       const detectionOptions: {
         source?: string;
         target?: string;
@@ -214,6 +222,117 @@ export class ToolRegistry {
         isError: true,
       };
     }
+  }
+
+  private async handleLanguageSpecificDetection(
+    language: string,
+    files: string[],
+    includeWarnings: boolean,
+    source: string
+  ): Promise<MCPToolResult> {
+    if (!this.languageHandlerManager) {
+      throw new Error('Language handler manager not initialized');
+    }
+
+    const fs = await import('fs/promises');
+    const path = await import('path');
+    const allErrors: any[] = [];
+
+    // Convert language string to SupportedLanguage enum
+    const supportedLanguage = language as SupportedLanguage;
+
+    for (const filePath of files) {
+      try {
+        // Read file content
+        const fullPath = path.resolve(filePath);
+        const fileContent = await fs.readFile(fullPath, 'utf-8');
+
+        // Detect errors using language handler
+        const languageErrors = await this.languageHandlerManager.detectErrors(
+          fileContent,
+          supportedLanguage,
+          {
+            filePath: fullPath,
+            enableLinting: true,
+            includeWarnings,
+          }
+        );
+
+        // Convert language errors to the expected format
+        for (const langError of languageErrors) {
+          allErrors.push({
+            id: `error-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            message: langError.message,
+            type: `${language}Error`,
+            category: 'syntax',
+            severity: langError.severity === 'error' ? 'high' : 'low',
+            file: langError.location.file,
+            line: langError.location.line,
+            column: langError.location.column,
+            timestamp: new Date().toISOString(),
+            source: {
+              type: source,
+              tool: `${language}-handler`,
+              version: '1.0.0',
+              configuration: {
+                detector: source,
+              },
+            },
+          });
+        }
+      } catch (error) {
+        this.logger.error(`Failed to process file ${filePath}`, error);
+        // Add file processing error
+        allErrors.push({
+          id: `error-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          message: `Failed to process file: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          type: 'FileProcessingError',
+          category: 'system',
+          severity: 'high',
+          file: filePath,
+          line: 0,
+          column: 0,
+          timestamp: new Date().toISOString(),
+          source: {
+            type: source,
+            tool: `${language}-handler`,
+            version: '1.0.0',
+            configuration: {
+              detector: source,
+            },
+          },
+        });
+      }
+    }
+
+    return {
+      content: [{
+        type: 'text',
+        text: JSON.stringify({
+          source,
+          language,
+          files,
+          includeWarnings,
+          realTime: false,
+          errors: allErrors,
+          stats: {
+            totalErrors: allErrors.length,
+            errorsByDetector: {
+              [source]: allErrors.length,
+            },
+            errorsByCategory: allErrors.reduce((acc, error) => {
+              acc[error.category] = (acc[error.category] || 0) + 1;
+              return acc;
+            }, {} as Record<string, number>),
+            errorsBySeverity: allErrors.reduce((acc, error) => {
+              acc[error.severity] = (acc[error.severity] || 0) + 1;
+              return acc;
+            }, {} as Record<string, number>),
+          },
+          timestamp: new Date().toISOString(),
+        }, null, 2),
+      }],
+    };
   }
 
   private async handleAnalyzeError(args: Record<string, unknown>): Promise<MCPToolResult> {
@@ -391,5 +510,9 @@ export class ToolRegistry {
 
   setErrorDetectorManager(manager: ErrorDetectorManager): void {
     this.errorDetectorManager = manager;
+  }
+
+  setLanguageHandlerManager(manager: LanguageHandlerManager): void {
+    this.languageHandlerManager = manager;
   }
 }

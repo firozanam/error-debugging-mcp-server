@@ -24,6 +24,7 @@ import { ResourceManager } from './resource-manager.js';
 import { ToolRegistry } from './tool-registry.js';
 import { PromptRegistry } from './prompt-registry.js';
 import { ErrorDetectorManager } from '@/detectors/error-detector-manager.js';
+import { LanguageHandlerManager } from '@/languages/language-handler-manager.js';
 import { Logger } from '@/utils/logger.js';
 
 export class ErrorDebuggingMCPServer extends EventEmitter {
@@ -33,6 +34,7 @@ export class ErrorDebuggingMCPServer extends EventEmitter {
   private toolRegistry: ToolRegistry;
   private promptRegistry: PromptRegistry;
   private errorDetectorManager: ErrorDetectorManager;
+  private languageHandlerManager: LanguageHandlerManager;
   private config: ServerConfig;
   private _isRunning = false;
   private logger = new Logger('info', { logFile: undefined });
@@ -56,6 +58,9 @@ export class ErrorDebuggingMCPServer extends EventEmitter {
     this.promptRegistry = new PromptRegistry();
     this.errorDetectorManager = new ErrorDetectorManager({
       config: config.detection,
+    });
+    this.languageHandlerManager = new LanguageHandlerManager({
+      autoDetectLanguages: true,
     });
 
     this.setupHandlers();
@@ -170,15 +175,22 @@ export class ErrorDebuggingMCPServer extends EventEmitter {
       await this.pluginManager.initialize();
       this.logger.logPerformance('plugin-manager-init', Date.now() - pluginStartTime);
 
+      // Initialize language handler manager
+      this.logger.debug('Initializing language handler manager...');
+      const languageHandlerStartTime = Date.now();
+      await this.languageHandlerManager.initialize();
+      this.logger.logPerformance('language-handler-manager-start', Date.now() - languageHandlerStartTime);
+
       // Initialize error detection
       this.logger.debug('Initializing error detector manager...');
       const errorDetectorStartTime = Date.now();
       await this.errorDetectorManager.start();
       this.logger.logPerformance('error-detector-manager-start', Date.now() - errorDetectorStartTime);
 
-      // Connect error detector manager to tool registry
-      this.logger.debug('Connecting error detector manager to tool registry...');
+      // Connect managers to tool registry
+      this.logger.debug('Connecting managers to tool registry...');
       this.toolRegistry.setErrorDetectorManager(this.errorDetectorManager);
+      this.toolRegistry.setLanguageHandlerManager(this.languageHandlerManager);
 
       // Register core tools and resources
       this.logger.debug('Registering core components...');
@@ -220,7 +232,7 @@ export class ErrorDebuggingMCPServer extends EventEmitter {
       this.logger.info('Server started successfully', {
         totalStartupTime,
         ...transportInfo,
-        components: ['plugin-manager', 'error-detector-manager', 'tool-registry', 'core-components', 'transport'],
+        components: ['plugin-manager', 'language-handler-manager', 'error-detector-manager', 'tool-registry', 'core-components', 'transport'],
         memoryUsage: process.memoryUsage()
       });
 
@@ -248,6 +260,7 @@ export class ErrorDebuggingMCPServer extends EventEmitter {
     try {
       await this.server.close();
       await this.errorDetectorManager.stop();
+      await this.languageHandlerManager.dispose();
       await this.pluginManager.shutdown();
 
       this._isRunning = false;
