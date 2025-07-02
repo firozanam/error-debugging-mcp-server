@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  error-debugging-mcp-server-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: error-debugging-mcp-server-dev
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+      - "9229:9229"  # Debug port
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - LOG_LEVEL=debug
+      - DEBUG=*
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - ./logs:/app/logs
+    networks:
+      - mcp-dev-network
+    command: npm run dev
+
+  # Development database for testing
+  postgres-dev:
+    image: postgres:15-alpine
+    container_name: error-debugging-postgres-dev
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=error_debugging_dev
+      - POSTGRES_USER=dev_user
+      - POSTGRES_PASSWORD=dev_password
+    volumes:
+      - postgres-dev-data:/var/lib/postgresql/data
+    networks:
+      - mcp-dev-network
+
+  # Redis for development
+  redis-dev:
+    image: redis:7-alpine
+    container_name: error-debugging-redis-dev
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - mcp-dev-network
+
+networks:
+  mcp-dev-network:
+    driver: bridge
+
+volumes:
+  postgres-dev-data:

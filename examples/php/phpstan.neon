@@ -1,0 +1,14 @@
+parameters:
+    level: max
+    paths:
+        - sample.php
+    
+    # Enable strict rules
+    checkMissingIterableValueType: true
+    checkGenericClassInNonGenericObjectType: true
+    reportUnmatchedIgnoredErrors: true
+    
+    # Ignore specific errors for demo purposes
+    ignoreErrors:
+        # Allow mixed types in demo
+        - '#Parameter \#2 \$value of method .+::addData\(\) has no value type specified in iterable type array\.#'

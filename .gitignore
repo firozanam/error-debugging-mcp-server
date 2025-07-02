@@ -62,6 +62,14 @@ web_modules/
 # Output of 'npm pack'
 *.tgz
 
+# Compressed files
+*.zip
+*.rar
+*.7z
+*.gz
+*.tar
+*.tar.gz
+
 # Yarn Integrity file
 .yarn-integrity
 
@@ -137,3 +145,121 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# TypeScript build output
+dist/
+build/
+lib/
+
+# Test coverage reports (additional patterns)
+*.lcov.info
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# MCP Server specific
+*.mcp
+mcp-server.log
+error-debugging-config.json
+error-debugging-mcp-server.zip
+
+# Development and testing
+test-project/
+benchmarks/results/
+*.benchmark.json
+
+# Docker volumes and data
+docker-data/
+.docker/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Backup files
+*.backup
+*.bak
+*.orig
+
+# Runtime configuration
+config/local.json
+config/development.json
+config/staging.json
+configs/local/
+configs/development/
+configs/staging/
+
+# Logs and debugging
+*.log.*
+debug.log
+error.log
+access.log
+combined.log
+
+# Package manager files
+package-lock.json.backup
+yarn.lock.backup
+.pnpm-debug.log
+
+# Environment specific
+.env.local
+.env.development
+.env.staging
+.env.production
+
+# Performance and profiling
+*.cpuprofile
+*.heapprofile
+*.heapsnapshot
+
+# Security
+.secrets
+secrets/
+private/
+*.key
+*.pem
+*.p12
+*.pfx
+
+# Documentation build
+docs/build/
+docs/dist/
+.docusaurus/
+
+# Additional miscellaneous
+*.tgz.backup
+
+# MCP Protocol specific
+*.mcp.json
+mcp-*.log
+mcp-debug-*
+.mcp-cache/
+
+# Development tools
+.history/
+.vscode-test/
+.nyc_output/
+
+# Build artifacts
+*.d.ts.map
+*.js.map
+
+# Test artifacts
+test-results/
+test-output/
+*.test.log

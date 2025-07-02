@@ -1,0 +1,64 @@
+# Development Dockerfile for Error Debugging MCP Server
+FROM node:18-alpine
+
+# Install system dependencies for language tools
+RUN apk add --no-cache \
+    python3 \
+    py3-pip \
+    go \
+    rust \
+    cargo \
+    git \
+    curl \
+    bash \
+    vim
+
+# Install global language tools
+RUN npm install -g \
+    typescript \
+    eslint \
+    @typescript-eslint/parser \
+    @typescript-eslint/eslint-plugin \
+    nodemon \
+    tsx
+
+# Install Python tools
+RUN pip3 install pylint
+
+# Install Go tools
+RUN go install golang.org/x/tools/cmd/goimports@latest && \
+    go install honnef.co/go/tools/cmd/staticcheck@latest
+
+# Install Rust tools
+RUN rustup component add clippy
+
+# Create app user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S appuser -u 1001
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm ci
+
+# Create necessary directories
+RUN mkdir -p /app/logs /app/tmp && \
+    chown -R appuser:nodejs /app
+
+# Switch to non-root user
+USER appuser
+
+# Expose ports
+EXPOSE 3000 9229
+
+# Set environment variables
+ENV NODE_ENV=development \
+    PORT=3000 \
+    LOG_LEVEL=debug
+
+# Start the development server
+CMD ["npm", "run", "dev"]

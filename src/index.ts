@@ -1,0 +1,76 @@
+#!/usr/bin/env node
+
+/**
+ * Main entry point for the Error Debugging MCP Server
+ */
+
+import { ErrorDebuggingMCPServer } from './server/mcp-server.js';
+import { ConfigManager } from './utils/config-manager.js';
+import { Logger } from './utils/logger.js';
+
+async function main(): Promise<void> {
+  try {
+    // Initialize configuration
+    const configManager = new ConfigManager();
+    const config = await configManager.loadConfig();
+    
+    // Initialize logger
+    const logger = new Logger(config.server.logLevel);
+    logger.info('Starting Error Debugging MCP Server', {
+      name: config.server.name,
+      version: config.server.version,
+    });
+
+    // Create and start server
+    const server = new ErrorDebuggingMCPServer(config);
+    
+    // Set up error handling
+    server.on('server:error', (error) => {
+      logger.error('Server error:', error);
+    });
+
+    server.on('server:started', (info) => {
+      logger.info('Server started successfully', info);
+    });
+
+    server.on('server:stopped', () => {
+      logger.info('Server stopped');
+    });
+
+    // Handle process signals
+    process.on('SIGINT', async () => {
+      logger.info('Received SIGINT, shutting down gracefully...');
+      await server.stop();
+      process.exit(0);
+    });
+
+    process.on('SIGTERM', async () => {
+      logger.info('Received SIGTERM, shutting down gracefully...');
+      await server.stop();
+      process.exit(0);
+    });
+
+    process.on('uncaughtException', (error) => {
+      logger.error('Uncaught exception:', error);
+      process.exit(1);
+    });
+
+    process.on('unhandledRejection', (reason, promise) => {
+      logger.error('Unhandled rejection', { promise, reason });
+      process.exit(1);
+    });
+
+    // Start the server
+    await server.start();
+
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+}
+
+// Run the server
+main().catch((error) => {
+  console.error('Fatal error:', error);
+  process.exit(1);
+});

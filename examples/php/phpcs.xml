@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<ruleset name="PHP Error Detection Example">
+    <description>PHP_CodeSniffer configuration for error detection example</description>
+    
+    <!-- Include the PSR-12 standard -->
+    <rule ref="PSR12"/>
+    
+    <!-- Check these files -->
+    <file>sample.php</file>
+    
+    <!-- Show progress -->
+    <arg value="p"/>
+    
+    <!-- Use colors -->
+    <arg name="colors"/>
+    
+    <!-- Show sniff codes in all reports -->
+    <arg value="s"/>
+    
+    <!-- Exclude specific rules for demo purposes -->
+    <rule ref="PSR12.Files.FileHeader.IncorrectOrder">
+        <severity>0</severity>
+    </rule>
+</ruleset>

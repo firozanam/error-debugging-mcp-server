@@ -1,0 +1,32 @@
+{
+    "name": "error-debugging/php-example",
+    "description": "PHP example for error debugging MCP server",
+    "type": "project",
+    "require": {
+        "php": "^8.0"
+    },
+    "require-dev": {
+        "phpstan/phpstan": "^1.10",
+        "squizlabs/php_codesniffer": "^3.7",
+        "phpunit/phpunit": "^10.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "ErrorDebugging\\Examples\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "ErrorDebugging\\Examples\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "phpstan": "phpstan analyse src --level=max",
+        "phpcs": "phpcs src --standard=PSR12",
+        "phpcbf": "phpcbf src --standard=PSR12"
+    },
+    "config": {
+        "sort-packages": true
+    }
+}
