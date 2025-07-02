@@ -16,13 +16,13 @@ async function testMCPProtocol() {
   console.log('🧪 Testing MCP Protocol Communication');
   console.log('====================================\n');
 
-  const serverPath = path.join(__dirname, 'dist', 'index.js');
+  const serverPath = path.join(__dirname, '..', 'dist', 'index.js');
   console.log('📍 Server path:', serverPath);
 
   // Start the server process
   const server = spawn('node', [serverPath], {
     stdio: ['pipe', 'pipe', 'pipe'],
-    cwd: __dirname
+    cwd: path.join(__dirname, '..')
   });
 
   let responseReceived = false;
