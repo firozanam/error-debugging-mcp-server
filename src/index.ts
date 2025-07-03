@@ -14,15 +14,20 @@ async function main(): Promise<void> {
     const configManager = new ConfigManager();
     const config = await configManager.loadConfig();
     
-    // Initialize logger
-    const logger = new Logger(config.server.logLevel);
-    logger.info('Starting Error Debugging MCP Server', {
-      name: config.server.name,
-      version: config.server.version,
+    // Initialize logger - completely disable logging for MCP mode to avoid protocol interference
+    const logger = new Logger(config.server.logLevel, {
+      enableConsole: false, // Always disable console logging to avoid MCP protocol interference
+      enableFile: false,    // Disable file logging too for now
+      logFile: undefined
     });
 
+    // Only log to stderr in development mode with TTY
+    if (process.env['NODE_ENV'] === 'development' && process.stdin.isTTY) {
+      process.stderr.write(`Starting Error Debugging MCP Server ${config.server.version}\n`);
+    }
+
     // Create and start server
-    const server = new ErrorDebuggingMCPServer(config);
+    const server = new ErrorDebuggingMCPServer(config, logger);
     
     // Set up error handling
     server.on('server:error', (error) => {

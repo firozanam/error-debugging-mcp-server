@@ -9,7 +9,7 @@ vi.mock('fs');
 
 describe('Logger', () => {
   let logger: Logger;
-  let consoleSpy: ReturnType<typeof vi.spyOn>;
+  let stderrWriteSpy: ReturnType<typeof vi.spyOn>;
   let mockWriteFile: ReturnType<typeof vi.mocked>;
   let mockAppendFile: ReturnType<typeof vi.mocked>;
   let mockMkdir: ReturnType<typeof vi.mocked>;
@@ -19,11 +19,8 @@ describe('Logger', () => {
     // Reset all mocks
     vi.clearAllMocks();
 
-    // Mock console methods - the logger uses specific console methods
-    consoleSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-    vi.spyOn(console, 'error').mockImplementation(() => {});
-    vi.spyOn(console, 'warn').mockImplementation(() => {});
-    vi.spyOn(console, 'debug').mockImplementation(() => {});
+    // Mock process.stderr.write - the logger uses stderr for MCP compatibility
+    stderrWriteSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
 
     // Mock fs functions
     mockWriteFile = vi.mocked(writeFile);
@@ -78,28 +75,28 @@ describe('Logger', () => {
 
     it('should log debug messages', () => {
       logger.debug('Debug message');
-      expect(console.debug).toHaveBeenCalledWith(
+      expect(stderrWriteSpy).toHaveBeenCalledWith(
         expect.stringContaining('DEBUG')
       );
     });
 
     it('should log info messages', () => {
       logger.info('Info message');
-      expect(console.info).toHaveBeenCalledWith(
+      expect(stderrWriteSpy).toHaveBeenCalledWith(
         expect.stringContaining('INFO')
       );
     });
 
     it('should log warn messages', () => {
       logger.warn('Warning message');
-      expect(console.warn).toHaveBeenCalledWith(
+      expect(stderrWriteSpy).toHaveBeenCalledWith(
         expect.stringContaining('WARN')
       );
     });
 
     it('should log error messages', () => {
       logger.error('Error message');
-      expect(console.error).toHaveBeenCalledWith(
+      expect(stderrWriteSpy).toHaveBeenCalledWith(
         expect.stringContaining('ERROR')
       );
     });
@@ -109,25 +106,25 @@ describe('Logger', () => {
     it('should filter debug messages when level is info', () => {
       logger = new Logger('info');
       logger.debug('Debug message');
-      expect(console.debug).not.toHaveBeenCalled();
+      expect(stderrWriteSpy).not.toHaveBeenCalled();
     });
 
     it('should filter info messages when level is warn', () => {
       logger = new Logger('warn');
       logger.info('Info message');
-      expect(console.info).not.toHaveBeenCalled();
+      expect(stderrWriteSpy).not.toHaveBeenCalled();
     });
 
     it('should filter warn messages when level is error', () => {
       logger = new Logger('error');
       logger.warn('Warning message');
-      expect(console.warn).not.toHaveBeenCalled();
+      expect(stderrWriteSpy).not.toHaveBeenCalled();
     });
 
     it('should allow error messages at error level', () => {
       logger = new Logger('error');
       logger.error('Error message');
-      expect(console.error).toHaveBeenCalled();
+      expect(stderrWriteSpy).toHaveBeenCalled();
     });
   });
 
@@ -139,14 +136,14 @@ describe('Logger', () => {
     it('should log with additional data', () => {
       const data = { userId: 123, action: 'login' };
       logger.info('User action', data);
-      expect(console.info).toHaveBeenCalledWith(
+      expect(stderrWriteSpy).toHaveBeenCalledWith(
         expect.stringContaining('INFO')
       );
     });
 
     it('should log with source information', () => {
       logger.info('Message', undefined, 'TestModule');
-      expect(console.info).toHaveBeenCalledWith(
+      expect(stderrWriteSpy).toHaveBeenCalledWith(
         expect.stringContaining('[TestModule]')
       );
     });
@@ -154,7 +151,7 @@ describe('Logger', () => {
     it('should log with both data and source', () => {
       const data = { key: 'value' };
       logger.info('Message', data, 'TestModule');
-      expect(console.info).toHaveBeenCalledWith(
+      expect(stderrWriteSpy).toHaveBeenCalledWith(
         expect.stringContaining('[TestModule]')
       );
     });
@@ -184,7 +181,7 @@ describe('Logger', () => {
 
     it('should not log to console when console disabled', () => {
       logger.info('Test message');
-      expect(console.info).not.toHaveBeenCalled();
+      expect(stderrWriteSpy).not.toHaveBeenCalled();
     });
   });
 
@@ -197,8 +194,8 @@ describe('Logger', () => {
       const data = { test: true };
       logger.info('Test message', data, 'TestSource');
 
-      // Verify the log entry structure by checking console output
-      expect(console.info).toHaveBeenCalledWith(
+      // Verify the log entry structure by checking stderr output
+      expect(stderrWriteSpy).toHaveBeenCalledWith(
         expect.stringMatching(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z.*INFO.*\[TestSource\].*Test message/)
       );
     });
@@ -246,10 +243,10 @@ describe('Logger', () => {
       const expensiveData = () => {
         throw new Error('Should not be called');
       };
-      
+
       // Debug message should be filtered at info level, so the function shouldn't be called
       logger.debug('Debug message');
-      expect(console.debug).not.toHaveBeenCalled();
+      expect(stderrWriteSpy).not.toHaveBeenCalled();
     });
   });
 
@@ -262,7 +259,7 @@ describe('Logger', () => {
       // This would require extending the logger to support session IDs
       // For now, we'll test the basic functionality
       logger.info('Session message');
-      expect(console.info).toHaveBeenCalled();
+      expect(stderrWriteSpy).toHaveBeenCalled();
     });
   });
 });

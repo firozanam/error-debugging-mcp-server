@@ -37,11 +37,12 @@ export class ErrorDebuggingMCPServer extends EventEmitter {
   private languageHandlerManager: LanguageHandlerManager;
   private config: ServerConfig;
   private _isRunning = false;
-  private logger = new Logger('info', { logFile: undefined });
+  private logger: Logger;
 
-  constructor(config: ServerConfig) {
+  constructor(config: ServerConfig, logger?: Logger) {
     super();
     this.config = config;
+    this.logger = logger || new Logger('info', { logFile: undefined });
     this.server = new Server(
       {
         name: config.server.name,
@@ -54,13 +55,15 @@ export class ErrorDebuggingMCPServer extends EventEmitter {
 
     this.pluginManager = new PluginManager();
     this.resourceManager = new ResourceManager();
-    this.toolRegistry = new ToolRegistry();
+    this.toolRegistry = new ToolRegistry(this.logger);
     this.promptRegistry = new PromptRegistry();
     this.errorDetectorManager = new ErrorDetectorManager({
       config: config.detection,
+      logger: this.logger,
     });
     this.languageHandlerManager = new LanguageHandlerManager({
       autoDetectLanguages: true,
+      logger: this.logger,
     });
 
     this.setupHandlers();

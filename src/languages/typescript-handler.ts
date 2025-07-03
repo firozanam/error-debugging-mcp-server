@@ -15,14 +15,15 @@ import type {
   PerformanceAnalysis
 } from '../types/languages.js';
 import { SupportedLanguage } from '../types/languages.js';
+import { Logger } from '../utils/logger.js';
 
 export class TypeScriptHandler extends BaseLanguageHandler {
   private tscPath: string | undefined;
   private eslintPath: string | undefined;
   private nodePath: string | undefined;
 
-  constructor(options: Record<string, unknown> = {}) {
-    super(SupportedLanguage.TYPESCRIPT, options);
+  constructor(options: Record<string, unknown> = {}, logger?: Logger) {
+    super(SupportedLanguage.TYPESCRIPT, options, logger);
   }
 
   getFileExtensions(): string[] {

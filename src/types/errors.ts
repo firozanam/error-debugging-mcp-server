@@ -70,7 +70,7 @@ export interface DetectedError {
 }
 
 export interface ErrorSource {
-  type: 'console' | 'runtime' | 'build' | 'test' | 'linter' | 'static-analysis' | 'ide';
+  type: 'console' | 'runtime' | 'build' | 'test' | 'linter' | 'static-analysis' | 'ide' | 'build-tools' | 'process-monitor' | 'multi-language';
   tool?: string;
   version?: string;
   configuration?: Record<string, unknown>;

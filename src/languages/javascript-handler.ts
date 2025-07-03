@@ -15,13 +15,14 @@ import type {
   PerformanceAnalysis
 } from '../types/languages.js';
 import { SupportedLanguage } from '../types/languages.js';
+import { Logger } from '../utils/logger.js';
 
 export class JavaScriptHandler extends BaseLanguageHandler {
   private eslintPath: string | undefined;
   private nodePath: string | undefined;
 
-  constructor(options: Record<string, unknown> = {}) {
-    super(SupportedLanguage.JAVASCRIPT, options);
+  constructor(options: Record<string, unknown> = {}, logger?: Logger) {
+    super(SupportedLanguage.JAVASCRIPT, options, logger);
   }
 
   getFileExtensions(): string[] {

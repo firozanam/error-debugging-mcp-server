@@ -21,6 +21,7 @@ export interface LanguageHandlerManagerConfig {
   enabledLanguages?: SupportedLanguage[];
   autoDetectLanguages?: boolean;
   defaultOptions?: Record<string, unknown>;
+  logger?: Logger;
 }
 
 export class LanguageHandlerManager extends EventEmitter {
@@ -42,9 +43,9 @@ export class LanguageHandlerManager extends EventEmitter {
       autoDetectLanguages: true,
       ...config
     };
-    this.logger = new Logger('debug', {
+    this.logger = config.logger || new Logger('debug', {
       logFile: undefined,
-      enableConsole: true
+      enableConsole: false // Default to disabled to avoid MCP protocol interference
     });
   }
 
@@ -102,17 +103,17 @@ export class LanguageHandlerManager extends EventEmitter {
 
     switch (language) {
       case SupportedLanguage.TYPESCRIPT:
-        return new TypeScriptHandler(options);
+        return new TypeScriptHandler(options, this.logger);
       case SupportedLanguage.JAVASCRIPT:
-        return new JavaScriptHandler(options);
+        return new JavaScriptHandler(options, this.logger);
       case SupportedLanguage.PYTHON:
-        return new PythonHandler(options);
+        return new PythonHandler(options, this.logger);
       case SupportedLanguage.GO:
-        return new GoHandler(options);
+        return new GoHandler(options, this.logger);
       case SupportedLanguage.RUST:
-        return new RustHandler(options);
+        return new RustHandler(options, this.logger);
       case SupportedLanguage.PHP:
-        return new PHPHandler(options);
+        return new PHPHandler(options, this.logger);
       default:
         throw new Error(`Unsupported language: ${language}`);
     }

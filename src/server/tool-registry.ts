@@ -15,7 +15,14 @@ export class ToolRegistry {
   private handlers: Map<string, ToolHandler> = new Map();
   private errorDetectorManager: ErrorDetectorManager | null = null;
   private languageHandlerManager: LanguageHandlerManager | null = null;
-  private logger = new Logger('info', { logFile: undefined });
+  private logger: Logger;
+
+  constructor(logger?: Logger) {
+    this.logger = logger || new Logger('info', {
+      logFile: undefined,
+      enableConsole: false // Default to disabled to avoid MCP protocol interference
+    });
+  }
 
   async registerTool(tool: MCPTool, handler?: ToolHandler): Promise<void> {
     this.logger.debug(`Registering tool: ${tool.name}`, {

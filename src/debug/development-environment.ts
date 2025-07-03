@@ -96,7 +96,10 @@ export class DevelopmentEnvironment extends EventEmitter {
           test: true,
           linter: true,
           staticAnalysis: true,
-          ide: true
+          ide: true,
+          buildTools: true,
+          processMonitor: true,
+          multiLanguage: true
         },
         filters: {
           categories: [],
@@ -110,6 +113,33 @@ export class DevelopmentEnvironment extends EventEmitter {
         },
         bufferSize: 1000,
         maxErrorsPerSession: 100
+      },
+      proactiveMonitoring: {
+        enabled: true,
+        workspaceRoot: process.cwd(),
+        fileWatching: {
+          enabled: true,
+          debounceMs: 500,
+          watchPatterns: ['src/**/*', 'lib/**/*', '*.ts', '*.tsx', '*.js', '*.jsx'],
+          ignorePatterns: ['node_modules/**', 'dist/**', 'build/**', '.git/**']
+        },
+        buildProcessMonitoring: {
+          enabled: true,
+          buildCommands: ['tsc', 'webpack', 'vite', 'rollup'],
+          watchConfigFiles: true,
+          autoRestartBuilds: false
+        },
+        compilationMonitoring: {
+          enabled: true,
+          languages: ['typescript', 'javascript'],
+          watchTsConfig: true,
+          watchPackageJson: true
+        },
+        realTimeAnalysis: {
+          enabled: true,
+          analysisDelay: 1000,
+          maxConcurrentAnalysis: 3
+        }
       }
     });
     this.debugSessionManager = new DebugSessionManager(this.languageManager);

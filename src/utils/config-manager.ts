@@ -202,6 +202,9 @@ export class ConfigManager {
           linter: true,
           staticAnalysis: true,
           ide: true,
+          buildTools: true,
+          processMonitor: true,
+          multiLanguage: true,
         },
         filters: {
           categories: [],

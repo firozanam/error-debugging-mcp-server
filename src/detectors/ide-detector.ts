@@ -148,7 +148,7 @@ export class IDEErrorDetector extends BaseErrorDetector {
       // 2. Access vscode.languages.getDiagnostics()
       // 3. Listen for workspace changes
       
-      console.log('IDE integration initialized (simulation mode)');
+      // IDE integration initialized (simulation mode)
     } catch (error) {
       throw new Error(`Failed to initialize VS Code integration: ${error}`);
     }

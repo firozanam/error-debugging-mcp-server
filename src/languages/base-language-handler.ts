@@ -22,12 +22,13 @@ export abstract class BaseLanguageHandler extends EventEmitter implements Langua
 
   constructor(
     public readonly language: SupportedLanguage,
-    protected options: Record<string, unknown> = {}
+    protected options: Record<string, unknown> = {},
+    logger?: Logger
   ) {
     super();
-    this.logger = new Logger('debug', {
+    this.logger = logger || new Logger('debug', {
       logFile: undefined,
-      enableConsole: true
+      enableConsole: false // Default to disabled to avoid MCP protocol interference
     });
   }
 

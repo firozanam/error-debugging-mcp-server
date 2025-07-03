@@ -15,14 +15,15 @@ import type {
   PerformanceAnalysis
 } from '../types/languages.js';
 import { SupportedLanguage } from '../types/languages.js';
+import { Logger } from '../utils/logger.js';
 
 export class RustHandler extends BaseLanguageHandler {
   private rustcPath: string | undefined;
   private cargoPath: string | undefined;
   private clippyPath: string | undefined;
 
-  constructor(options: Record<string, unknown> = {}) {
-    super(SupportedLanguage.RUST, options);
+  constructor(options: Record<string, unknown> = {}, logger?: Logger) {
+    super(SupportedLanguage.RUST, options, logger);
   }
 
   getFileExtensions(): string[] {

@@ -15,14 +15,15 @@ import type {
   PerformanceAnalysis
 } from '../types/languages.js';
 import { SupportedLanguage } from '../types/languages.js';
+import { Logger } from '../utils/logger.js';
 
 export class GoHandler extends BaseLanguageHandler {
   private goPath: string | undefined;
   private golintPath: string | undefined;
   private govetPath: string | undefined;
 
-  constructor(options: Record<string, unknown> = {}) {
-    super(SupportedLanguage.GO, options);
+  constructor(options: Record<string, unknown> = {}, logger?: Logger) {
+    super(SupportedLanguage.GO, options, logger);
   }
 
   getFileExtensions(): string[] {

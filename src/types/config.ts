@@ -51,6 +51,9 @@ export interface ErrorDetectionConfig {
     linter: boolean;
     staticAnalysis: boolean;
     ide: boolean;
+    buildTools: boolean;
+    processMonitor: boolean;
+    multiLanguage: boolean;
   };
   filters: {
     categories: ErrorCategory[];

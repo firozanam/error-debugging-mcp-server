@@ -15,6 +15,7 @@ import type {
   PerformanceAnalysis
 } from '../types/languages.js';
 import { SupportedLanguage } from '../types/languages.js';
+import { Logger } from '../utils/logger.js';
 
 export class PHPHandler extends BaseLanguageHandler {
   private phpPath: string | undefined;
@@ -22,8 +23,8 @@ export class PHPHandler extends BaseLanguageHandler {
   private phpcsPath: string | undefined;
   private composerPath: string | undefined;
 
-  constructor(options: Record<string, unknown> = {}) {
-    super(SupportedLanguage.PHP, options);
+  constructor(options: Record<string, unknown> = {}, logger?: Logger) {
+    super(SupportedLanguage.PHP, options, logger);
   }
 
   getFileExtensions(): string[] {

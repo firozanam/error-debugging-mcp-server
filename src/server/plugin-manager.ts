@@ -120,11 +120,11 @@ export class PluginManager {
       
       async initialize(_context: PluginContext): Promise<void> {
         // Initialize error detection capabilities
-        console.log('Error detection plugin initialized');
+        // Error detection plugin initialized
       },
       
       async shutdown(): Promise<void> {
-        console.log('Error detection plugin shutdown');
+        // Error detection plugin shutdown
       },
     };
 
@@ -135,11 +135,11 @@ export class PluginManager {
       dependencies: ['error-detection'],
       
       async initialize(_context: PluginContext): Promise<void> {
-        console.log('Error analysis plugin initialized');
+        // Error analysis plugin initialized
       },
       
       async shutdown(): Promise<void> {
-        console.log('Error analysis plugin shutdown');
+        // Error analysis plugin shutdown
       },
     };
 
@@ -149,11 +149,11 @@ export class PluginManager {
       description: 'Core debugging functionality',
       
       async initialize(_context: PluginContext): Promise<void> {
-        console.log('Debugging plugin initialized');
+        // Debugging plugin initialized
       },
       
       async shutdown(): Promise<void> {
-        console.log('Debugging plugin shutdown');
+        // Debugging plugin shutdown
       },
     };
 

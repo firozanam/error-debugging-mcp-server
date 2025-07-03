@@ -15,14 +15,15 @@ import type {
   PerformanceAnalysis
 } from '../types/languages.js';
 import { SupportedLanguage } from '../types/languages.js';
+import { Logger } from '../utils/logger.js';
 
 export class PythonHandler extends BaseLanguageHandler {
   private pythonPath: string | undefined;
   private pylintPath: string | undefined;
   private flake8Path: string | undefined;
 
-  constructor(options: Record<string, unknown> = {}) {
-    super(SupportedLanguage.PYTHON, options);
+  constructor(options: Record<string, unknown> = {}, logger?: Logger) {
+    super(SupportedLanguage.PYTHON, options, logger);
   }
 
   getFileExtensions(): string[] {

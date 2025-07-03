@@ -16,11 +16,17 @@ import { LinterErrorDetector } from './linter-detector.js';
 import { IDEErrorDetector } from './ide-detector.js';
 import { StaticAnalysisDetector } from './static-analysis-detector.js';
 import { TestErrorDetector } from './test-detector.js';
+import { BuildToolDetector } from './build-tool-detector.js';
+import { ProcessMonitorDetector } from './process-monitor-detector.js';
+import { MultiLanguageDetector } from './multi-language-detector.js';
+import { ProactiveMonitoringCoordinator, type ProactiveMonitoringConfig } from '@/monitoring/proactive-monitoring-coordinator.js';
 import { Logger } from '@/utils/logger.js';
 
 export interface DetectorManagerOptions {
   config: ErrorDetectionConfig;
   workspaceRoot?: string;
+  proactiveMonitoring?: ProactiveMonitoringConfig;
+  logger?: Logger;
 }
 
 export class ErrorDetectorManager extends EventEmitter {
@@ -29,13 +35,23 @@ export class ErrorDetectorManager extends EventEmitter {
   // private _workspaceRoot: string; // Reserved for future use
   private isRunning = false;
   private aggregatedErrors: DetectedError[] = [];
-  private logger = new Logger('info', { logFile: undefined });
+  private logger: Logger;
+  private proactiveCoordinator: ProactiveMonitoringCoordinator | null = null;
 
   constructor(options: DetectorManagerOptions) {
     super();
     this.config = options.config;
+    this.logger = options.logger || new Logger('info', {
+      logFile: undefined,
+      enableConsole: false // Default to disabled to avoid MCP protocol interference
+    });
     // this._workspaceRoot = options.workspaceRoot || process.cwd();
     this.initializeDetectors();
+
+    // Initialize proactive monitoring if configured
+    if (options.proactiveMonitoring) {
+      this.initializeProactiveMonitoring(options.proactiveMonitoring);
+    }
   }
 
   private initializeDetectors(): void {
@@ -88,6 +104,24 @@ export class ErrorDetectorManager extends EventEmitter {
     if (this.config.sources.test) {
       const testDetector = new TestErrorDetector(detectorOptions);
       this.registerDetector('test', testDetector);
+    }
+
+    // Initialize build tools detector
+    if (this.config.sources.buildTools) {
+      const buildToolDetector = new BuildToolDetector(detectorOptions);
+      this.registerDetector('buildTools', buildToolDetector);
+    }
+
+    // Initialize process monitor detector
+    if (this.config.sources.processMonitor) {
+      const processMonitorDetector = new ProcessMonitorDetector(detectorOptions);
+      this.registerDetector('processMonitor', processMonitorDetector);
+    }
+
+    // Initialize multi-language detector
+    if (this.config.sources.multiLanguage) {
+      const multiLanguageDetector = new MultiLanguageDetector(detectorOptions);
+      this.registerDetector('multiLanguage', multiLanguageDetector);
     }
   }
 
@@ -159,11 +193,22 @@ export class ErrorDetectorManager extends EventEmitter {
 
     await Promise.all(startPromises);
 
+    // Start proactive monitoring coordinator
+    if (this.proactiveCoordinator) {
+      try {
+        await this.proactiveCoordinator.start();
+        this.logger.info('Proactive monitoring coordinator started');
+      } catch (error) {
+        this.logger.warn('Failed to start proactive monitoring coordinator', error);
+      }
+    }
+
     const totalStartTime = Date.now() - startTime;
     this.logger.info('Error detector manager started successfully', {
       startedDetectors: enabledDetectors,
       totalStartTime,
-      memoryUsage: process.memoryUsage()
+      memoryUsage: process.memoryUsage(),
+      proactiveMonitoring: this.proactiveCoordinator?.isCoordinatorRunning() || false
     });
 
     this.emit('manager-started');
@@ -175,6 +220,16 @@ export class ErrorDetectorManager extends EventEmitter {
     }
 
     this.isRunning = false;
+
+    // Stop proactive monitoring coordinator first
+    if (this.proactiveCoordinator) {
+      try {
+        await this.proactiveCoordinator.stop();
+        this.logger.info('Proactive monitoring coordinator stopped');
+      } catch (error) {
+        this.logger.warn('Failed to stop proactive monitoring coordinator', error);
+      }
+    }
 
     // Stop all detectors
     const stopPromises: Promise<void>[] = [];
@@ -336,7 +391,7 @@ export class ErrorDetectorManager extends EventEmitter {
         return this.config.sources.test;
       case 'linter':
         return this.config.sources.linter;
-      case 'static-analysis':
+      case 'staticAnalysis':
         return this.config.sources.staticAnalysis;
       default:
         return false;
@@ -426,5 +481,40 @@ export class ErrorDetectorManager extends EventEmitter {
 
   isManagerRunning(): boolean {
     return this.isRunning;
+  }
+
+  private initializeProactiveMonitoring(config: ProactiveMonitoringConfig): void {
+    this.proactiveCoordinator = new ProactiveMonitoringCoordinator(this, config);
+
+    // Set up event forwarding
+    this.proactiveCoordinator.on('proactive-error-detected', (error: DetectedError) => {
+      this.emit('proactive-error-detected', error);
+    });
+
+    this.proactiveCoordinator.on('proactive-errors-detected', (event: { filePath: string; errors: DetectedError[] }) => {
+      this.emit('proactive-errors-detected', event);
+    });
+
+    this.proactiveCoordinator.on('compilation-status-changed', (event: any) => {
+      this.emit('compilation-status-changed', event);
+    });
+
+    this.proactiveCoordinator.on('coordinator-error', (error: any) => {
+      this.logger.warn('Proactive monitoring coordinator error', error);
+    });
+  }
+
+  // Public API for proactive monitoring
+  getProactiveMonitoringStatus(): any {
+    if (!this.proactiveCoordinator) {
+      return { enabled: false };
+    }
+
+    return {
+      enabled: true,
+      running: this.proactiveCoordinator.isCoordinatorRunning(),
+      compilationStatuses: this.proactiveCoordinator.getAllCompilationStatuses(),
+      buildProcesses: this.proactiveCoordinator.getBuildProcesses()
+    };
   }
 }

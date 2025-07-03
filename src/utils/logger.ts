@@ -104,18 +104,20 @@ export class Logger {
 
     const logMessage = `${timestamp} ${level} ${source} ${message}${data}`;
 
+    // For MCP servers using stdio transport, all logging must go to stderr
+    // to avoid interfering with the MCP protocol on stdout
     switch (entry.level) {
       case 'debug':
-        console.debug(logMessage);
+        process.stderr.write(logMessage + '\n');
         break;
       case 'info':
-        console.info(logMessage);
+        process.stderr.write(logMessage + '\n');
         break;
       case 'warn':
-        console.warn(logMessage);
+        process.stderr.write(logMessage + '\n');
         break;
       case 'error':
-        console.error(logMessage);
+        process.stderr.write(logMessage + '\n');
         break;
     }
   }
